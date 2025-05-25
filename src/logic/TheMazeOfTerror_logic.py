@@ -2,15 +2,18 @@ import random
 
 class Persona:
     def __init__(self, fila = -1, columna = -1):
+        self.nombre = "Persona"
         self.fila = fila
         self.columna = columna
         self.direcciones_permitidas = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         self.esta_retrasada = False       # será true si cae en un retraso, de esto depende que se mueva (PONER UN WHILE, MIENTRAS FALSE SE MUEVE)
         self.posicion_actual = None
         self.ruta_realizada = ArbolRutaFinal()
+        self.posibilidad_rutas = ArbolRutasPosibles()
 
 
     def simular_movimiento(self, laberinto, arbol):
+        self.posibilidad_rutas = Movimientos.crear_arbol_rutas_posibles(laberinto, self, ArbolRutasPosibles())
         ruta_ejecutar = Movimientos.buscar_ruta_mas_corta(laberinto, arbol)
 
         if len(ruta_ejecutar) < 2:
@@ -94,9 +97,10 @@ class Laberinto:
         self.salida = posicion_salida
 
     def generar_personas(self):
-        cantidad_personas =  self.n
-        for _ in range(cantidad_personas):
+        cantidad_personas =  1
+        for i in range(cantidad_personas):
             persona = Persona()
+            persona.nombre = f"Persona {i + 1}"
             self.personas.append(persona)
 
     def ubicar_persona(self):
@@ -313,7 +317,7 @@ class ArbolRutaFinal:
         if node is None:
             node = self.root
             if node is None:
-                print("Árbol vacío")
+                print("La persona todavía no ha cambiado de posición")
                 return
         print(prefix + ("└── " if is_last else "├── ") + str(node.value))
         new_prefix = prefix + ("    " if is_last else "│   ")
