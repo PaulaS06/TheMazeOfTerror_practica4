@@ -11,8 +11,7 @@ def obtener_datos():
     else: 
         print("Ingrese un valor válido")
         return obtener_datos()
-
-
+    
 
 def menu_secundario(laberinto):
     while True:
@@ -36,21 +35,24 @@ def menu_secundario(laberinto):
             for persona in laberinto.personas:
                 arbol = ArbolRutasPosibles()
                 arbol = Movimientos.crear_arbol_rutas_posibles(laberinto, persona, arbol)
-                rutas = Movimientos.filtrar_rutas_llegan_salida(laberinto, arbol)
-                print(f"\nRutas que llegan a la salida para {persona.nombre} en posición inicial ({persona.fila}, {persona.columna}):")
-                for ruta in rutas:
-                    print(ruta)
+                arbol_rutas_salida = Movimientos.generar_arbol_rutas_llegan_salida(laberinto, arbol)
+                print(f"\n🔍 Calculando las rutas que llegan a la salida para {persona.nombre} desde ({persona.fila}, {persona.columna})...")
+                print(f"\nRutas que llegan a la salida para {persona.nombre})")
+                arbol_rutas_salida.print(arbol_rutas_salida.root)
         elif opcion == "3":
             for persona in laberinto.personas:
                 arbol = ArbolRutasPosibles()
                 arbol = Movimientos.crear_arbol_rutas_posibles(laberinto, persona, arbol)
-                ruta_corta = Movimientos.buscar_ruta_mas_corta(laberinto, arbol)
-                print(f"\nRuta más corta para {persona.nombre} en posición inicial ({persona.fila}, {persona.columna}): {ruta_corta}")
+                arbol_ruta_corta = Movimientos.generar_arbol_rutas_mas_corta(laberinto, arbol)
+                print(f"\n🔍 Calculando ruta más corta para {persona.nombre} desde ({persona.fila}, {persona.columna})...")
+                print(f"\nRuta más corta para {persona.nombre}")
+                arbol_ruta_corta.print(arbol_ruta_corta.root)
         elif opcion == "4":
             for persona in laberinto.personas:
                 arbol = ArbolRutasPosibles()
                 arbol = Movimientos.crear_arbol_rutas_posibles(laberinto, persona, arbol)
-                print(f"\nPosibilidades de movimiento para persona en posición inicial ({persona.fila}, {persona.columna}):")
+                print(f"\n🔍 Calculando las rutas que puede tomar {persona.nombre} desde ({persona.fila}, {persona.columna})...")
+                print(f"\nPosibilidades de movimiento para {persona.nombre}")
                 arbol.print(arbol.root)
         elif opcion == "5":
             print("\nEstado actual del laberinto:")
@@ -63,6 +65,10 @@ def menu_secundario(laberinto):
 
 
 def ejecutar_simulacion(laberinto):
+    if len(laberinto.personas) == 0:
+        print("No hay personas en el laberinto. Fin de la simulación.")
+        return
+    
     for persona in laberinto.personas:
         persona.posicion_actual = (persona.fila, persona.columna)
         persona.ruta_realizada.root = NodoRutaFinal(persona.posicion_actual)
@@ -72,28 +78,35 @@ def ejecutar_simulacion(laberinto):
         rutas = Movimientos.filtrar_rutas_llegan_salida(laberinto, arbol)
         persona.simular_movimiento(laberinto, arbol)
     # Vamos a cambiar de puesto las trampas, bloqueos y retrasos para la siguiente iteración
+    laberinto.limpiar_laberinto_TBR()
     laberinto.ubicar_bloqueo()
     laberinto.ubicar_trampa()
     laberinto.ubicar_retraso()
 
-
+def show_menu():
+    print("\n--- Menú ---")
+    print("1. Iniciar Laberinto")
+    print("2. Colocar bloqueos X")
+    print("3. Colocar trampas X")
+    print("4. Colocar retrasadores X")
+    print("5. Visualizar estado actual del laberinto")
+    print("6. Calcular la siguiente iteración")
+    print("7. --- Ver detalles de la simulación")
+    print("8. Salir del juego")
+    print()
 
 def menu_principal():
     simulacion_iniciada = False 
     laberinto = None
-    print("Bienvenido a The Maze of Terror")
+    print()
+    print("================================")
+    print("BIENVENIDO A THE MAZE OF TERROR")
+    print("================================")
 
     while True:
-        print("\n--- Menú ---")
-        print("1. Iniciar Laberinto")
-        print("2. Colocar bloqueos")
-        print("3. Colocar trampas")
-        print("4. Colocar retrasadores")
-        print("5. Visualizar estado actual del laberinto")
-        print("6. Calcular la siguiente iteración")
-        print("7. --- Ver detalles de la simulación")
-        print("8. Salir del juego")
-        print()
+        input("\nPresiona Enter para mostrar el menú...")
+        show_menu()
+        
         opcion = input("Seleccione una opción: ")
 
         if opcion == "1":
@@ -153,7 +166,7 @@ def menu_principal():
                 print("Inicie primero la simulación antes de realizar cualquier acción.")
                 continue
             ejecutar_simulacion(laberinto)
-            print("Estado  del laberinto después de la simulación:")
+            print("\nEstado  del laberinto después de la simulación:\n")
             print(laberinto)
             print()
         
@@ -172,7 +185,6 @@ def menu_principal():
         else:
             print("Opción no válida, intente nuevamente.")
             continue
-
 
 
 def main():
