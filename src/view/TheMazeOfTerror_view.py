@@ -95,6 +95,22 @@ def menu_secundario(laberinto):
                 persona.ruta_realizada.print()
         elif opcion == "2":
             for persona in laberinto.personas:
+                if persona.llego_a_salida:
+                    print(f"\n✅ {persona.nombre} ya ha llegado a la salida.")
+                    arbol_ruta_realizada = persona.ruta_realizada
+                    matriz_ruta_realizada = []
+                    for i in range(laberinto.n):
+                        fila = []
+                        for j in range(laberinto.n):
+                            fila.append("⬜")
+                        matriz_ruta_realizada.append(fila)
+                    for nodo in arbol_ruta_realizada:
+                        fila, columna = nodo.value
+                        matriz_ruta_realizada[fila][columna] = "🔴"
+                    for fila in matriz_ruta_realizada:
+                        print(" ".join(fila))
+                    continue
+                
                 arbol = Arbol()
                 arbol = Movimientos.crear_arbol_rutas_posibles(laberinto, persona, arbol)
                 ruta_corta = Movimientos.buscar_ruta_mas_corta(laberinto, arbol)
