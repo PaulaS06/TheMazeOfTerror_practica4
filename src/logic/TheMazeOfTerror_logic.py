@@ -173,7 +173,7 @@ class Movimientos:
         if current_pos == laberinto.salida:
             return arbol
 
-        if persona.direcciones_permitidas is None:
+        if not persona.direcciones_permitidas:
             print("😓 Ay muchachos... no tengo movimientos disponibles desde esta posición.")
             return arbol
         
@@ -188,8 +188,9 @@ class Movimientos:
                     posiciones_a_mover.append(nueva_pos)
 
         if len(posiciones_a_mover) == 0:
-            print("😓 Ay muchachos... no tengo pisiciones a donde moverme desde esta posición.")
-            
+            print("😓 Ay muchachos... no tengo posiciones a donde moverme desde esta posición.")
+            return arbol
+
         for siguiente_posicion in posiciones_a_mover:
             if siguiente_posicion not in visitados:
                 arbol.insert(current_pos, siguiente_posicion)
