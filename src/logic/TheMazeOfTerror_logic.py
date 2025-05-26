@@ -21,7 +21,7 @@ class Persona:
         ruta_ejecutar = Movimientos.buscar_ruta_mas_corta(laberinto, arbol)
 
         if ruta_ejecutar is None:
-            print("😓 Ay muchachos... no tengo movimientos posibles desde esta posición.")
+            print("😓 Ay muchachos... estoy atrapad@, no tengo rutas posibles desde esta posición.")
             return
 
         nueva_pos = ruta_ejecutar[1]
@@ -186,10 +186,10 @@ class Movimientos:
                 nueva_pos = (fila, columna)
                 if laberinto.matriz[nueva_pos[0]][nueva_pos[1]] != "❌" and not isinstance(laberinto.matriz[nueva_pos[0]][nueva_pos[1]], Persona):
                     posiciones_a_mover.append(nueva_pos)
-            return arbol
 
         if len(posiciones_a_mover) == 0:
             print("😓 Ay muchachos... no tengo pisiciones a donde moverme desde esta posición.")
+            
         for siguiente_posicion in posiciones_a_mover:
             if siguiente_posicion not in visitados:
                 arbol.insert(current_pos, siguiente_posicion)

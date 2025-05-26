@@ -165,7 +165,6 @@ def ejecutar_simulacion(laberinto):
         if persona.llego_a_salida == False:
             hay_personas_en_laberinto = True
             persona.posicion_actual = (persona.fila, persona.columna)
-            persona.ruta_realizada.root = Nodo(persona.posicion_actual)
             print(f"\n🧍 Simulando para {persona.nombre} en posición ({persona.fila}, {persona.columna})")
             arbol = Arbol()
             arbol = Movimientos.crear_arbol_rutas_posibles(laberinto, persona, arbol)
