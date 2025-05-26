@@ -1,5 +1,6 @@
 import random
 
+
 class Persona:
     def __init__(self, fila = None, columna = None):
         self.nombre = "Persona"
@@ -7,56 +8,60 @@ class Persona:
         self.columna = columna
         self.direcciones_permitidas = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         self.esta_retrasada = False       # será true si cae en un retraso, de esto depende que se mueva (PONER UN WHILE, MIENTRAS FALSE SE MUEVE)
+        self.llego_a_salida = False
         self.posicion_actual = None
         self.ruta_realizada = Arbol()
         self.posibilidad_rutas = Arbol()
 
     def simular_movimiento(self, laberinto, arbol):
+        if self.llego_a_salida == True:
+            return
+        
         self.posibilidad_rutas = Movimientos.crear_arbol_rutas_posibles(laberinto, self, Arbol())
         ruta_ejecutar = Movimientos.buscar_ruta_mas_corta(laberinto, arbol)
 
-        # if len(ruta_ejecutar) < 2:
-        #     return
+        if ruta_ejecutar is None:
+            print("😓 Ay muchachos... no tengo movimientos posibles desde esta posición.")
+            return
 
         nueva_pos = ruta_ejecutar[1]
         fila_nueva, col_nueva = nueva_pos
 
         if nueva_pos == laberinto.salida:
+            self.llego_a_salida = True
             laberinto.matriz[self.fila][self.columna] = "⬜"
-            # self.fila, self.columna = fila_nueva, col_nueva
+            self.fila, self.columna = fila_nueva, col_nueva
             self.ruta_realizada.insert(self.posicion_actual, nueva_pos)
-            # self.posicion_actual = nueva_pos
-            laberinto.personas.remove(self) 
-            print(f" 🏁 Has llegado a la salida!!!")
+            self.posicion_actual = nueva_pos
+            print(f" 🏁 He llegado a la salida!!!")
             return
 
         if self.esta_retrasada:
-            print(" ⏭️  Persona está retrasada. Turno perdido. 👎")
+            print(" ⏭️  Estoy retrasada. Turno perdido. 👎")
             self.esta_retrasada = False
             return
 
         laberinto.matriz[self.fila][self.columna] = "⬜"
 
-        if laberinto.matriz[fila_nueva][col_nueva] == "💥":
+        if laberinto.matriz[fila_nueva][col_nueva] == "💥": # TRAMPA
             if self.direcciones_permitidas:
                 movimiento_perdido = random.choice(self.direcciones_permitidas)
                 self.direcciones_permitidas.remove(movimiento_perdido)
-                print(f"⚠️ Trampa activada. Se perdió el movimiento: {movimiento_perdido}")
-                print(self.direcciones_permitidas)
+                print(f"⚠️ Trampa activada. Perdí el movimiento: {movimiento_perdido}")
             else:
-                print("🚫 No hay movimientos disponibles para moverse, la persona quedará siendo un obstáculo en la posición actual.")
+                print("🚫 Ay muchachos, no tengo movimientos disponibles para moverme, quedaré siendo un obstáculo en mi posición actual.")
                 
-        elif laberinto.matriz[fila_nueva][col_nueva] == "🐌":
+        elif laberinto.matriz[fila_nueva][col_nueva] == "🐌": # RETRASO
             self.esta_retrasada = True
-            print("⏳ Pierde un turno.")
+            print("⏳ Perdí mi siguiente turno.")
 
-        anterior_pos = self.posicion_actual  # Guarda la posición anterior
-        self.ruta_realizada.insert(anterior_pos, nueva_pos)  # Inserta con la posición anterior como padre
-        self.posicion_actual = nueva_pos  # Luego actualiza la posición actual
+        anterior_pos = self.posicion_actual  
+        self.ruta_realizada.insert(anterior_pos, nueva_pos) 
+        self.posicion_actual = nueva_pos  
         self.fila = fila_nueva
         self.columna = col_nueva
         laberinto.matriz[self.fila][self.columna] = self
-        print(f"✅ Se movió a {nueva_pos}")
+        print(f"✅ Me moví a {nueva_pos}")
 
     def __repr__(self):
         return "🧍"
@@ -78,7 +83,7 @@ class Laberinto:
             matriz.append(fila)
         return matriz
 
-    def posiciones_matriz(self):  # Retorna TODAS las posiciones de la matriz
+    def posiciones_matriz(self):
         posiciones = []
         for i in range(len(self.matriz)):
             for j in range(len(self.matriz[i])):
@@ -100,13 +105,10 @@ class Laberinto:
 
     def ubicar_persona(self):
         posiciones = self.posiciones_matriz()
-
         if self.salida in posiciones:
             posiciones.remove(self.salida)
-
         for persona in self.personas:
             posicion_inicial_persona = random.choice(posiciones)
-
             if self.matriz[posicion_inicial_persona[0]][posicion_inicial_persona[1]] == "⬜":
                 posiciones.remove(posicion_inicial_persona)
                 self.matriz[posicion_inicial_persona[0]][posicion_inicial_persona[1]] = persona
@@ -117,13 +119,10 @@ class Laberinto:
 
     def ubicar_trampa(self):
         posiciones = self.posiciones_matriz()
-
         if self.salida in posiciones:
             posiciones.remove(self.salida)
-
         for i in range(self.n - 1):
             posicion_trampa = random.choice(posiciones)
-
             if self.matriz[posicion_trampa[0]][posicion_trampa[1]] == "⬜":
                 posiciones.remove(posicion_trampa)
                 self.matriz[posicion_trampa[0]][posicion_trampa[1]] = "💥"
@@ -147,7 +146,7 @@ class Laberinto:
             if self.matriz[posicion_retraso[0]][posicion_retraso[1]] == "⬜":
                 posiciones.remove(posicion_retraso)
                 self.matriz[posicion_retraso[0]][posicion_retraso[1]] = "🐌"
-        
+
     def limpiar_laberinto_TBR(self):
         for i in range(self.n):
             for j in range(self.n):
@@ -163,17 +162,21 @@ class Laberinto:
 
 
 class Movimientos:
-
     @staticmethod
     def crear_arbol_rutas_posibles(laberinto, persona, arbol, current_pos = None, visitados = None):
-        if current_pos is None:
-            current_pos = (persona.fila, persona.columna)   # es decir la posicion original de la persona
-            arbol.root = Nodo(current_pos)
+        if visitados is None:
             visitados = []
+        if current_pos is None:
+            current_pos = (persona.fila, persona.columna) 
+            arbol.root = Nodo(current_pos)
         visitados.append(current_pos)
         if current_pos == laberinto.salida:
             return arbol
 
+        if persona.direcciones_permitidas is None:
+            print("😓 Ay muchachos... no tengo movimientos disponibles desde esta posición.")
+            return arbol
+        
         posiciones_a_mover = []
 
         for i, j in persona.direcciones_permitidas:
@@ -183,13 +186,14 @@ class Movimientos:
                 nueva_pos = (fila, columna)
                 if laberinto.matriz[nueva_pos[0]][nueva_pos[1]] != "❌" and not isinstance(laberinto.matriz[nueva_pos[0]][nueva_pos[1]], Persona):
                     posiciones_a_mover.append(nueva_pos)
-        if len(posiciones_a_mover) == 0:
-            print("😓 Ay muchachos... no hay movimientos posibles desde esta posición.")
             return arbol
-        for siguiente_pos in posiciones_a_mover:
-            if siguiente_pos not in visitados:
-                arbol.insert(current_pos, siguiente_pos)
-                Movimientos.crear_arbol_rutas_posibles(laberinto, persona, arbol, siguiente_pos, visitados)
+
+        if len(posiciones_a_mover) == 0:
+            print("😓 Ay muchachos... no tengo pisiciones a donde moverme desde esta posición.")
+        for siguiente_posicion in posiciones_a_mover:
+            if siguiente_posicion not in visitados:
+                arbol.insert(current_pos, siguiente_posicion)
+                Movimientos.crear_arbol_rutas_posibles(laberinto, persona, arbol, siguiente_posicion, visitados)
                 visitados.pop()
         return arbol
 
@@ -215,8 +219,8 @@ class Movimientos:
     @staticmethod
     def generar_arbol_rutas_llegan_salida(laberinto, arbol):
         rutas = Movimientos.filtrar_rutas_llegan_salida(laberinto, arbol)
-        if not rutas:
-            print("😓 Ay muchachos... no hay movimientos posibles desde esta posición.")
+        if len(rutas) == 0:
+            print("😓 Ay muchachos... no tengo rutas que lleguen a la salida desde esta posición.")
             return 
         
         arbol_rutas_llegan_salida = Arbol()
@@ -232,18 +236,14 @@ class Movimientos:
     def buscar_ruta_mas_corta(laberinto, arbol):
         rutas = Movimientos.filtrar_rutas_llegan_salida(laberinto, arbol)
         if not rutas:
-            print("😓 Ay muchachos... no hay movimientos posibles desde esta posición.")
+            print("😓 Ay muchachos... no tengo rutas que lleguen a la salida desde esta posición.")
             return 
         return min(rutas, key = len)
 
     @staticmethod
     def generar_arbol_rutas_mas_corta(laberinto, arbol):
         ruta_mas_corta = Movimientos.buscar_ruta_mas_corta(laberinto, arbol)
-        if not ruta_mas_corta:
-            print("😓 Ay muchachos... no hay movimientos posibles desde esta posición.")
-            return 
-        arbol_ruta_mas_corta = Arbol()
-        
+        arbol_ruta_mas_corta = Arbol()  
         for i in range(1, len(ruta_mas_corta)):
             padre = ruta_mas_corta[i - 1]
             hijo = ruta_mas_corta[i]
