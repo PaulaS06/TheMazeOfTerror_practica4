@@ -104,13 +104,24 @@ def menu_secundario(laberinto):
                         for j in range(laberinto.n):
                             fila.append("⬜")
                         matriz_ruta_realizada.append(fila)
-                    for nodo in arbol_ruta_realizada:
+
+                    def recorrer_arbol(nodo):
+                        if nodo is None:
+                            return
                         fila, columna = nodo.value
                         matriz_ruta_realizada[fila][columna] = "🔴"
+                        for hijo in nodo.children:
+                            recorrer_arbol(hijo)
+
+                    recorrer_arbol(persona.ruta_realizada.root)
+                    matriz_ruta_realizada[laberinto.salida[0]][laberinto.salida[1]] = "🟢"
+                    matriz_ruta_realizada[persona.fila][persona.columna] = "🧍"
+
+                    print(f"\n🗺️  Mapa de la ruta realizada por {persona.nombre}:")
                     for fila in matriz_ruta_realizada:
-                        print(" ".join(fila))
+                        print("  ".join(fila))
                     continue
-                
+
                 arbol = Arbol()
                 arbol = Movimientos.crear_arbol_rutas_posibles(laberinto, persona, arbol)
                 ruta_corta = Movimientos.buscar_ruta_mas_corta(laberinto, arbol)
@@ -135,6 +146,7 @@ def menu_secundario(laberinto):
                     fila_str = "   ".join(str(celda) for celda in fila)
                     print(fila_str)
                     print()
+
         elif opcion == "3":
             for persona in laberinto.personas:
                 if persona.llego_a_salida:
