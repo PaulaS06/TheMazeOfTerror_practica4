@@ -8,12 +8,11 @@ class Persona:
         self.direcciones_permitidas = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         self.esta_retrasada = False       # será true si cae en un retraso, de esto depende que se mueva (PONER UN WHILE, MIENTRAS FALSE SE MUEVE)
         self.posicion_actual = None
-        self.ruta_realizada = ArbolRutaFinal()
-        self.posibilidad_rutas = ArbolRutasPosibles()
-
+        self.ruta_realizada = Arbol()
+        self.posibilidad_rutas = Arbol()
 
     def simular_movimiento(self, laberinto, arbol):
-        self.posibilidad_rutas = Movimientos.crear_arbol_rutas_posibles(laberinto, self, ArbolRutasPosibles())
+        self.posibilidad_rutas = Movimientos.crear_arbol_rutas_posibles(laberinto, self, Arbol())
         ruta_ejecutar = Movimientos.buscar_ruta_mas_corta(laberinto, arbol)
 
         # if len(ruta_ejecutar) < 2:
@@ -35,12 +34,9 @@ class Persona:
             self.esta_retrasada = False
             return
 
-
         laberinto.matriz[self.fila][self.columna] = "_"
-        suceso = "Normal"
 
         if laberinto.matriz[fila_nueva][col_nueva] == "T":
-            suceso = "Trampa"
             if self.direcciones_permitidas:
                 movimiento_perdido = random.choice(self.direcciones_permitidas)
                 self.direcciones_permitidas.remove(movimiento_perdido)
@@ -49,12 +45,11 @@ class Persona:
                 print("No hay movimientos disponibles para moverse, la persona quedará siendo un obstaculo en la posición actual.")
                 
         elif laberinto.matriz[fila_nueva][col_nueva] == "R":
-            suceso = "Retraso"
             self.esta_retrasada = True
             print("⏳ Pierde un turno.")
 
         anterior_pos = self.posicion_actual  # Guarda la posición anterior
-        self.ruta_realizada.insert(anterior_pos, nueva_pos, suceso)  # Inserta con la posición anterior como padre
+        self.ruta_realizada.insert(anterior_pos, nueva_pos)  # Inserta con la posición anterior como padre
         self.posicion_actual = nueva_pos  # Luego actualiza la posición actual
         self.fila = fila_nueva
         self.columna = col_nueva
@@ -117,7 +112,6 @@ class Laberinto:
                 persona.columna = posicion_inicial_persona[1]
                 persona.posicion_actual = posicion_inicial_persona
 
-
     def ubicar_trampa(self):
         posiciones = self.posiciones_matriz()
 
@@ -133,26 +127,20 @@ class Laberinto:
 
     def ubicar_bloqueo(self):
         posiciones = self.posiciones_matriz()
-
         if self.salida in posiciones:
             posiciones.remove(self.salida)
-
         for i in range(self.n - 1):
             posicion_bloqueo = random.choice(posiciones)
-
             if self.matriz[posicion_bloqueo[0]][posicion_bloqueo[1]] == "_":
                 posiciones.remove(posicion_bloqueo)
                 self.matriz[posicion_bloqueo[0]][posicion_bloqueo[1]] = "❌"
 
     def ubicar_retraso(self):
         posiciones = self.posiciones_matriz()
-
         if self.salida in posiciones:
             posiciones.remove(self.salida)
-
         for i in range(self.n - 1):
             posicion_retraso = random.choice(posiciones)
-
             if self.matriz[posicion_retraso[0]][posicion_retraso[1]] == "_":
                 posiciones.remove(posicion_retraso)
                 self.matriz[posicion_retraso[0]][posicion_retraso[1]] = "R"
@@ -166,25 +154,25 @@ class Laberinto:
     def __str__(self):
         resultado = []
         for fila in self.matriz:
-            fila_str = " ".join(str(celda) for celda in fila)
+            fila_str = "   ".join(str(celda) for celda in fila)
             resultado.append(fila_str)
-        return "\n".join(resultado)
+        return "\n\n".join(resultado)
 
 
-class NodoRutasPosibles:
-    def __init__(self, posicion: tuple, children: list = None):
+class Nodo:
+    def __init__(self, posicion: tuple, children: list = []):
         self.value = posicion  # En este voy a almacernar una tupla con la posicion
-        self.children = []
+        self.children = children
 
-class ArbolRutasPosibles:
-    def __init__(self, root: NodoRutasPosibles = None):
+class Arbol:
+    def __init__(self, root: Nodo = None):
         self.root = root
 
     def insert(self, parent, child, current_node = None):
         if (self.root is None):
-            new_root = NodoRutasPosibles(parent)
+            new_root = Nodo(parent)
             self.root = new_root
-            new_child = NodoRutasPosibles(child)
+            new_child = Nodo(child)
             self.root.children.append(new_child)
             return
 
@@ -203,7 +191,7 @@ class ArbolRutasPosibles:
                 por_visitar.append(children)
 
             if (current_node.value == parent):
-                new_child = NodoRutasPosibles(child)
+                new_child = Nodo(child)
                 current_node.children.append(new_child)
                 return 
         return
@@ -228,11 +216,9 @@ class Movimientos:
     def crear_arbol_rutas_posibles(laberinto, persona, arbol, current_pos = None, visitados = None):
         if current_pos is None:
             current_pos = (persona.fila, persona.columna)   # es decir la posicion original de la persona
-            arbol.root = NodoRutasPosibles(current_pos)
+            arbol.root = Nodo(current_pos)
             visitados = []
-
         visitados.append(current_pos)
-
         if current_pos == laberinto.salida:
             return arbol
 
@@ -241,22 +227,18 @@ class Movimientos:
         for i, j in persona.direcciones_permitidas:
             fila = current_pos[0] + i
             columna = current_pos[1] + j
-
             if (0 <= fila < laberinto.n) and (0 <= columna < laberinto.n):
                 nueva_pos = (fila, columna)
                 if laberinto.matriz[nueva_pos[0]][nueva_pos[1]] != "❌" and not isinstance(laberinto.matriz[nueva_pos[0]][nueva_pos[1]], Persona):
                     posiciones_a_mover.append(nueva_pos)
-
         if len(posiciones_a_mover) == 0:
             print("ay muchachos...")
             return arbol
-
         for siguiente_pos in posiciones_a_mover:
             if siguiente_pos not in visitados:
                 arbol.insert(current_pos, siguiente_pos)
                 Movimientos.crear_arbol_rutas_posibles(laberinto, persona, arbol, siguiente_pos, visitados)
                 visitados.pop()
-
         return arbol
 
     @staticmethod
@@ -279,7 +261,6 @@ class Movimientos:
         ruta_actual.pop()
         return rutas
 
-
     @staticmethod
     def generar_arbol_rutas_llegan_salida(laberinto, arbol):
         rutas = Movimientos.filtrar_rutas_llegan_salida(laberinto, arbol)
@@ -287,7 +268,7 @@ class Movimientos:
             print("Ay muchachos... No hay rutas que lleguen a la salida.")
             return 
         
-        arbol_rutas_llegan_salida = ArbolRutasPosibles()
+        arbol_rutas_llegan_salida = Arbol()
         
         for ruta in rutas:
             for i in range(1, len(ruta)):
@@ -304,69 +285,16 @@ class Movimientos:
             return 
         return min(rutas, key = len)
 
-
     @staticmethod
     def generar_arbol_rutas_mas_corta(laberinto, arbol):
         ruta_mas_corta = Movimientos.buscar_ruta_mas_corta(laberinto, arbol)
         if not ruta_mas_corta:
             print("Ay muchachos... No hay rutas que lleguen a la salida.")
             return 
-        arbol_ruta_mas_corta = ArbolRutasPosibles()
+        arbol_ruta_mas_corta = Arbol()
         
         for i in range(1, len(ruta_mas_corta)):
             padre = ruta_mas_corta[i - 1]
             hijo = ruta_mas_corta[i]
             arbol_ruta_mas_corta.insert(padre, hijo)
         return arbol_ruta_mas_corta
-
-
-class NodoRutaFinal:
-    def __init__(self, posicion: tuple, suceso = None, children: list = None):
-        self.value = posicion  
-        self.suceso = None
-        self.children = []
-
-class ArbolRutaFinal:
-    def __init__(self):
-        self.root = None
-
-    def insert(self, parent, child, current_node = None):
-        if (self.root is None):
-            new_root = NodoRutaFinal(parent)
-            self.root = new_root
-            new_child = NodoRutaFinal(child)
-            self.root.children.append(new_child)
-            return
-
-        por_visitar = []
-        visitados = []
-
-        if current_node is None:
-            current_node = self.root
-            por_visitar.append(current_node)
-
-        while por_visitar:
-            visitados.append(current_node)
-            current_node = por_visitar.pop()
-
-            for children in current_node.children:
-                por_visitar.append(children)
-
-            if (current_node.value == parent):
-                new_child = NodoRutaFinal(child)
-                current_node.children.append(new_child)
-                return 
-        return
-
-    def print(self, node=None, prefix="", is_last=True):
-        if node is None:
-            node = self.root
-            if node is None:
-                print("La persona todavía no ha cambiado de posición")
-                return
-        print(prefix + ("└── " if is_last else "├── ") + str(node.value))
-        new_prefix = prefix + ("    " if is_last else "│   ")
-        child_count = len(node.children)
-        for i, child in enumerate(node.children):
-            is_last_child = (i == child_count - 1)
-            self.print(child, new_prefix, is_last_child)
