@@ -188,8 +188,9 @@ class Movimientos:
                     posiciones_a_mover.append(nueva_pos)
 
         if len(posiciones_a_mover) == 0:
-            print("😓 Ay muchachos... no tengo posiciones a donde moverme desde esta posición.")
-            return arbol
+            if current_pos == (persona.fila, persona.columna):
+                print("😓 Ay muchachos... no tengo posiciones a donde moverme desde esta posición.")
+                return arbol
 
         for siguiente_posicion in posiciones_a_mover:
             if siguiente_posicion not in visitados:
@@ -220,6 +221,7 @@ class Movimientos:
     @staticmethod
     def generar_arbol_rutas_llegan_salida(laberinto, arbol):
         rutas = Movimientos.filtrar_rutas_llegan_salida(laberinto, arbol)
+        
         if len(rutas) == 0:
             print("😓 Ay muchachos... no tengo rutas que lleguen a la salida desde esta posición.")
             return 
